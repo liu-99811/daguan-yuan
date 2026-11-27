@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-paper font-kai text-ink antialiased;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 宣纸纹理：极淡的纤维感 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.5;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(150, 135, 110, 0.05) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(0deg, rgba(150, 135, 110, 0.04) 0 1px, transparent 1px 5px);
+  }
+}
+
+@layer components {
+  .seal-badge {
+    @apply grid place-items-center rounded text-paper-light;
+    background: theme('colors.seal.DEFAULT');
+  }
+
+  .hud-btn {
+    @apply rounded-full border border-ink/20 bg-paper-light/70 px-3 py-1 text-xs
+           tracking-[0.2em] text-ink-soft transition hover:border-seal/40 hover:bg-paper-light;
+  }
+}

@@ -1,0 +1,5 @@
+export { SCENES } from './scenes'
+export { CHARACTERS, DIED } from './characters'
+export { PANCI_PAGES, FATE } from './panci'
+export { ROOMS } from './rooms'
+export { HUAQIAN, RIDDLES } from './games'
