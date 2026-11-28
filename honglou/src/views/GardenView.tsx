@@ -7,8 +7,12 @@ interface Props {
 }
 
 /**
- * 一处院落：远景 / 中景 / 近景三层叠放，指针移动时以不同幅度偏移，形成纵深感。
- * 这是原项目「视差漫游」的最小可用版本，后续再加推近、入内。
+ * 一处院落：远景 / 中景 / 近景三层叠放。
+ *
+ * 关键：三张图都是白底水墨，必须用 mix-blend-mode: multiply（正片叠底），
+ * 白色才会透掉、墨线才会叠起来。缺了它，最上层会把下面全盖住。
+ *
+ * 层比容器大一圈（132%），指针移动时各层以不同幅度反向偏移，形成纵深。
  */
 export function GardenView({ scene, onBack }: Props) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -24,10 +28,11 @@ export function GardenView({ scene, onBack }: Props) {
     })
   }
 
+  // 远山是全园共用的一张底图，各院只叠中景与近景
   const layers = [
-    { src: scene.img.far, depth: 6, z: 'z-0' },
-    { src: scene.img.mid, depth: 14, z: 'z-10' },
-    { src: scene.img.near, depth: 26, z: 'z-20' },
+    { key: 'far', src: 'assets/far_common.jpg', depth: 5 },
+    { key: 'mid', src: scene.img.mid, depth: 14 },
+    { key: 'near', src: scene.img.near, depth: 26 },
   ].filter((l) => l.src)
 
   return (
@@ -37,18 +42,36 @@ export function GardenView({ scene, onBack }: Props) {
         onPointerMove={handleMove}
         onPointerLeave={() => setOffset({ x: 0, y: 0 })}
         className="absolute inset-0 touch-none"
+        style={{
+          background:
+            'radial-gradient(130% 110% at 50% 18%, #fdfaf0 0%, #f3ebd7 55%, #e6d8ba 100%)',
+        }}
       >
         {layers.map((l) => (
           <img
-            key={l.z}
+            key={l.key}
             src={l.src}
             alt=""
             draggable={false}
-            className={`absolute inset-0 h-full w-full object-cover ${l.z} transition-transform duration-150`}
-            style={{ transform: `translate3d(${-offset.x * l.depth}px, ${-offset.y * l.depth * 0.5}px, 0) scale(1.06)` }}
+            className="absolute left-[-16%] top-[-16%] h-[132%] w-[132%] object-cover
+                       transition-transform duration-200 ease-out will-change-transform"
+            style={{
+              mixBlendMode: 'multiply',
+              transform: `translate3d(${-offset.x * l.depth}px, ${-offset.y * l.depth * 0.5}px, 0)`,
+            }}
           />
         ))}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-paper/50 via-transparent to-paper/60" />
+
+        {/* 雾气：让远处虚一点，边界不硬 */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[6] opacity-40"
+          style={{
+            background:
+              'radial-gradient(50% 40% at 30% 60%, rgba(255,255,255,.5), rgba(255,255,255,0) 70%),' +
+              'radial-gradient(45% 35% at 75% 45%, rgba(255,255,255,.4), rgba(255,255,255,0) 70%)',
+          }}
+        />
+        <div className="pointer-events-none absolute inset-0 z-[7] bg-gradient-to-b from-paper/40 via-transparent to-paper/50" />
       </div>
 
       <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between p-4">
