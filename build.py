@@ -5,7 +5,7 @@
 用法：
     python3 build.py
 
-产物：dist/index.html（约 12.8 MB，所有图片编码在内，双击即开、断网可用）
+产物：根目录 index.html（约 12.8 MB，所有图片编码在内，双击即开、断网可用）
 """
 
 import base64
@@ -16,17 +16,27 @@ import sys
 BASE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(BASE, 'src')
 ASSETS = os.path.join(BASE, 'assets')
-OUT_DIR = os.path.join(BASE, 'dist')
-OUT = os.path.join(OUT_DIR, 'index.html')
+OUT = os.path.join(BASE, 'index.html')
 
 _cache = {}
+
+
+def resolve(rel):
+    """assets/xxx -> 实际路径。图片已归并到 honglou/public/assets，根目录不再保留副本。"""
+    p = os.path.join(BASE, rel)
+    if os.path.exists(p):
+        return p
+    alt = os.path.join(BASE, 'honglou', 'public', rel)
+    if os.path.exists(alt):
+        return alt
+    raise SystemExit('缺少文件：%s（也找过 honglou/public/%s）' % (p, rel))
 
 
 def data_uri(rel):
     """assets/xxx.jpg -> data:image/...;base64,..."""
     if rel in _cache:
         return _cache[rel]
-    path = os.path.join(BASE, rel)
+    path = resolve(rel)
     if not os.path.exists(path):
         raise SystemExit('缺少文件：%s' % path)
     mime = 'image/webp' if path.endswith('.webp') else 'image/jpeg'
@@ -76,10 +86,10 @@ def main():
         if f:
             app = app.replace(ph, data_uri(f))
         elif ph == '__HLMTEXT__':
-            with open(os.path.join(ASSETS, 'hlm_text.b64'), encoding='utf-8') as fh:
+            with open(resolve('assets/hlm_text.b64'), encoding='utf-8') as fh:
                 app = app.replace(ph, fh.read().strip())
         elif ph == '__HUIMU__':
-            with open(os.path.join(ASSETS, 'huimu.json'), encoding='utf-8') as fh:
+            with open(resolve('assets/huimu.json'), encoding='utf-8') as fh:
                 app = app.replace(ph, fh.read().strip())
 
     # 防止 </script> 提前闭合
@@ -100,7 +110,6 @@ def main():
     html = html.replace('<script src="feedback.js"></script>',
                         '<script>\n' + fb + '\n</script>')
 
-    os.makedirs(OUT_DIR, exist_ok=True)
     with open(OUT, 'w', encoding='utf-8') as f:
         f.write(html)
 
